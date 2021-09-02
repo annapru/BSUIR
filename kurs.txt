@@ -1,0 +1,158 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+using namespace std;
+int n;
+double p(double x) {
+	return 2 * x;
+}
+double q(double x) {
+	return -2;
+}
+double f(double x, double aa, double bb, double cc) {
+	return aa * x * x + bb * x + cc;
+}
+void progon(double** A, double* B, double* X, int n);
+int main()
+{
+	setlocale(LC_ALL, "Russian");
+	double alpha0; double alpha1; double Ac;
+	double beta0; double beta1; double Bc;
+	double a0; double b0;
+	double h, cc, bb, aa;
+	int st;
+	aa = 0;
+	bb = 0;
+	cc = 0;
+	//matrix A[n+1][n+1]
+	double** A = new double* [n + 1];
+	double AA[10];
+	cout << "Выберите вид правой части уравнения" << endl;
+	cout << "1. ax^2+bx+c" << endl;
+	cout << "2. bx+c" << endl;
+	cout << "3. c" << endl;
+	cin >> st;
+	cout << "Введите коэффициент c" << endl;
+	cin >> cc;
+	if (st < 3)
+	{
+		cout << "Введите коэффициент b" << endl;
+		cin >> bb;
+	}
+	if (st == 1)
+	{
+		cout << "Введите коэффициент a" << endl;
+		cin >> aa;
+	}
+	cout << "Уравнение: y''+2xy'-2y=" << aa << "*x^2+" << bb << "*x+" << cc
+		<< endl;
+	cout << "Краевые условия на отрезке [a;b]:" << endl;
+	cout << "alpha0*y(a)+alpha1*y'(a)=A" << endl;
+	cout << "beta0*y(b)+beta1*y'(b)=B" << endl;
+	cout << "Введите начало промежутка a" << endl;
+	cin >> a0;
+	cout << "Введите конец промежутка b" << endl;
+	cin >> b0;
+	cout << "Введите alpha0" << endl;
+	cin >> alpha0;
+	cout << "Введите alpha1" << endl;
+	cin >> alpha1;
+	cout << "Введите A" << endl;
+	cin >> Ac;
+	cout << "Введите beta0" << endl;
+	cin >> beta0;
+	cout << "Введите beta1" << endl;
+	cin >> beta1;
+	cout << "Введите B" << endl;
+	cin >> Bc;
+	cout << "Введите точность вычислений" << endl;
+	cin >> h;
+	n = (b0 - a0) / h;
+	for (int i = 0; i < n + 1; i++) {
+		A[i] = new double[n + 1];
+	}
+	//===
+	double* B = new double[n + 1]; //vector B[n+1]
+	double* X = new double[n + 1]; //vector X[n+1]
+	//Grid
+	for (int i = 0; i <= n; i++) {
+		X[i] = a0 + i * h;
+		//cout << X[i] << endl;
+	}
+	//===
+	cout << "h=" << h << endl;
+	//calculate matrix A, B
+	for (int i = 0; i <= n - 2; i++) {
+		A[i][i] = h * h * q(X[i]) - h * p(X[i]) + 1;
+		A[i][i + 1] = h * p(X[i]) - 2;
+		A[i][i + 2] = 1;
+		B[i] = h * h * f(X[i], aa, bb, cc);
+	}
+	A[n - 1][0] = alpha0 * h - alpha1;
+	A[n - 1][1] = alpha1;
+	A[n][n - 1] = -beta1;
+	A[n][n] = beta0 * h + beta1;
+	B[n - 1] = h * Ac;
+	B[n] = h * Bc;
+	//===
+	//print A
+	for (int i = 0; i <= n; i++) {
+		for (int j = 0; j <= n; j++) {
+			cout << "A[" << i << "]" << "[" << j << "]=" << A[i][j] << " ";
+		}
+		cout << endl;
+	}
+	//===
+	cout << endl;
+	//print B
+	for (int i = 0; i <= n; i++) {
+		cout << "B[" << i << "]=" << B[i] << " ";
+	}
+	cout << endl;
+	cout << endl;
+	//===
+	//solve A*X1=B
+	double* X1 = new double[n + 1]; //vector X1[n+1]
+	progon(A, B, X1, n + 1); //solve
+	//print X1
+	for (int i = 0; i <= n; i++) {
+		cout << "X1[" << i << "]=" << X1[i] << " ";
+	}
+	//===
+	system("pause"); // Команда задержки экрана
+	return 0;
+	}
+	void progon(double** A, double* B, double* X, int n) {
+		int m = n + 1;
+		//create C[n][n+1]
+		double** C = new double* [n];
+		for (int i = 0; i < n; i++) {
+			C[i] = new double[n + 1];
+		}
+		//===
+		//split A and B to C
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				C[i][j] = A[i][j];
+			}
+			C[i][n] = B[i];
+		}
+		
+		//forward
+		for (int k = 0; k < n - 1; k++) {
+			for (int i = k + 1; i < n; i++) {
+				for (int j = m - 1; j >= k; j--) {
+					C[i][j] = C[i][j] - C[i][k] * C[k][j] / C[k][k];
+				}
+			}
+		}
+		//reverse
+		X[n - 1] = A[n - 1][m - 2] / A[n - 1][m - 2];
+		for (int i = n - 2; i >= 0; i--) {
+			double s = 0;
+			for (int j = i + 1; j < m - 1; j++) {
+				s = s + C[i][j] * X[j];
+			}
+			X[i] = (C[i][m - 1] - s) / C[i][i];
+		}
+	}
